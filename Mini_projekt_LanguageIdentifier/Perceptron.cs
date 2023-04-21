@@ -1,70 +1,79 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
-public class Perceptron
+namespace Mini_projekt_LanguageIdentifier
 {
-    private List<double> weights;
-    private double theta;
-
-    public Perceptron(int lenOfVectorNumbers)
+    public class Perceptron
     {
-        Random rand = new Random();
-        weights = new List<double>();
-        for (int i = 0; i < lenOfVectorNumbers; i++)
+        private List<double> weights;
+        public double threshold = 1;
+
+        public readonly string language;
+
+        public Perceptron(string language, int inputSize)
         {
-            weights.Add(Math.Round(rand.NextDouble(), 7)); // weights random between [0;1]
-        }
-
-        theta = Math.Round(rand.NextDouble(), 7);
-    }
-
-
-    public int Predict(List<double> inputs)
-    {
-        double dotProduct = 0;
-        for (int i = 0; i < inputs.Count; i++)
-        {
-            dotProduct += inputs.ElementAt(i) * weights.ElementAt(i);
-        }
-
-        return (dotProduct - theta >= 0) ? 1 : 0; //return 1 if dot product is positive, -1 if negative
-    }
-
-
-    public void Train(List<Point> trainingData, int numEpochs, double learningRate)
-    {
-        for (int epoch = 0; epoch < numEpochs; epoch++)
-        {
-            foreach (var point in trainingData)
+            this.language = language;
+            weights = new List<double>();
+            for (int i = 0; i < inputSize; i++)
             {
-                var target =
-                    (point.name == "Iris-virginica")
-                        ? 1
-                        : 0; //set target output to 1 if example is of virginica class, 0 if versicolor
-                var prediction = Predict(point.numbers);
-                if (prediction != target) //update weights if prediction is incorrect
-                {
-                    theta -= learningRate * (target - prediction);
-                    for (int i = 0; i < weights.Count; i++)
-                    {
-                        weights[i] += learningRate * (target - prediction) * point.numbers.ElementAt(i);
-                    }
-                }
+                weights[i] = 1;
             }
         }
 
-        Console.WriteLine("odchylenie: " + theta);
-    }
-
-
-    private void showWeights()
-    {
-        for (int i = 0; i < weights.Count; i++)
+        public double GetNet(List<double> vector)
         {
-            Console.Write(weights.ElementAt(i) + " ");
+            double sum = 0;
+            for (int i = 0; i < vector.Count; i++)
+            {
+                sum += vector[i] * weights[i];
+            } // X * W
+
+
+            return sum - threshold; //net
         }
 
-        Console.WriteLine();
+        public void Normalize()
+        {
+            double sum = 0;
+            foreach (var d in weights)
+            {
+                sum += d * d;
+            }
+
+            double norm = Math.Sqrt(sum);
+
+            var newVector = new List<double>();
+
+            for (int i = 0; i < weights.Count; i++)
+            {
+                newVector[i] = weights[i] / norm;
+            }
+
+            threshold /= norm;
+            weights = newVector;
+        }
+
+        public void Learn(List<double> input, string keyLanguage, double learningRate)
+        {
+            int d = language == keyLanguage ? 1 : 0;
+
+            double sum = 0;
+            for (int i = 0; i < input.Count; i++) // X * W
+                sum += input[i] * this.weights[i];
+
+            int y = (sum >= this.threshold ? 1 : 0);
+
+            if (y != d)
+            {
+                var newVector = new List<double>();
+                for (int i = 0; i < input.Count; i++)
+                {
+                    newVector[i] = this.weights[i] + learningRate * (d - y) * input[i];
+                } // W' = W + (Correct-Y) * Alpha * X
+
+                weights = newVector;
+                threshold += (d - y) * learningRate * -1;
+            }
+        }
     }
 }
