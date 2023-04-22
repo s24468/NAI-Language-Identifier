@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -7,20 +8,19 @@ namespace Mini_projekt_LanguageIdentifier
     public class DataProvider
     {
         private readonly string _path;
-        public readonly Dictionary<string, string> Dictionary;
+        public readonly List<(string Key, string Value)> ListOfKeyValuePairs;
         public readonly List<string> Languages;
-       
-        
+
         public DataProvider(string path)
         {
             _path = path;
-            Dictionary = LoadDictionary();
+            ListOfKeyValuePairs = LoadListOfKeyValuePairs();
             Languages = GetLanguages();
         }
 
         private List<string> GetLanguages()
         {
-            IEnumerable<string> uniqueKeys = Dictionary.Keys.Distinct();
+            IEnumerable<string> uniqueKeys = ListOfKeyValuePairs.Select(kvp => kvp.Key).Distinct();
             var result = new List<string>();
 
             foreach (string key in uniqueKeys)
@@ -31,10 +31,10 @@ namespace Mini_projekt_LanguageIdentifier
             return result;
         }
 
-        private Dictionary<string, string> LoadDictionary()
+        private List<(string Key, string Value)> LoadListOfKeyValuePairs()
         {
-            var dictionaryResult = new Dictionary<string, string>();
-            using (var reader = new StreamReader(this._path))
+            var listResult = new List<(string Key, string Value)>();
+            using (var reader = new StreamReader(_path))
             {
                 // Read each line of the file until the end is reached
                 string line;
@@ -44,7 +44,7 @@ namespace Mini_projekt_LanguageIdentifier
                     string keyLanguage = "", sentence = "";
                     foreach (var letter in line.ToCharArray())
                     {
-                        if (letter != ',' && isOk == false)
+                        if (letter == ',')
                         {
                             isOk = true;
                         }
@@ -59,12 +59,11 @@ namespace Mini_projekt_LanguageIdentifier
                             sentence += letter;
                         }
                     }
-
-                    dictionaryResult.Add(keyLanguage, sentence);
+                    listResult.Add((keyLanguage, sentence));
                 }
             }
 
-            return dictionaryResult;
+            return listResult;
         }
     }
 }

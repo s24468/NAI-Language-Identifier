@@ -8,7 +8,7 @@ namespace Mini_projekt_LanguageIdentifier
         private List<double> weights;
         public double threshold = 1;
 
-        public readonly string language;
+        public string language;
 
         public Perceptron(string language, int inputSize)
         {
@@ -16,7 +16,7 @@ namespace Mini_projekt_LanguageIdentifier
             weights = new List<double>();
             for (int i = 0; i < inputSize; i++)
             {
-                weights[i] = 1;
+                weights.Add(1);
             }
         }
 
@@ -27,7 +27,6 @@ namespace Mini_projekt_LanguageIdentifier
             {
                 sum += vector[i] * weights[i];
             } // X * W
-
 
             return sum - threshold; //net
         }
@@ -46,7 +45,7 @@ namespace Mini_projekt_LanguageIdentifier
 
             for (int i = 0; i < weights.Count; i++)
             {
-                newVector[i] = weights[i] / norm;
+                newVector.Add(weights[i] / norm);
             }
 
             threshold /= norm;
@@ -56,19 +55,20 @@ namespace Mini_projekt_LanguageIdentifier
         public void Learn(List<double> input, string keyLanguage, double learningRate)
         {
             int d = language == keyLanguage ? 1 : 0;
-
             double sum = 0;
-            for (int i = 0; i < input.Count; i++) // X * W
+            for (int i = 0; i < input.Count; i++)
+            {
                 sum += input[i] * this.weights[i];
+            } // X * W
 
-            int y = (sum >= this.threshold ? 1 : 0);
-
+            int y = (sum >= threshold ? 1 : 0);
             if (y != d)
             {
                 var newVector = new List<double>();
+
                 for (int i = 0; i < input.Count; i++)
                 {
-                    newVector[i] = this.weights[i] + learningRate * (d - y) * input[i];
+                    newVector.Add(this.weights[i] + (d - y) * learningRate * input[i]);
                 } // W' = W + (Correct-Y) * Alpha * X
 
                 weights = newVector;

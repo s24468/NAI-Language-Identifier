@@ -1,10 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Mini_projekt_LanguageIdentifier
 {
     internal static class Program
     {
+        // [SuppressMessage("ReSharper.DPA", "DPA0002: Excessive memory allocations in SOH",
+        //     MessageId = "type: System.String; size: 571MB")]
+        // [SuppressMessage("ReSharper.DPA", "DPA0002: Excessive memory allocations in SOH",
+        //     MessageId = "type: System.String; size: 693MB")]
         public static void Main(string[] args)
         {
             // - - - -- - - - - - -- - - - - - - -- PROVIDE DATA - - - -- - - - - - -- - - - - - - -- 
@@ -20,20 +25,20 @@ namespace Mini_projekt_LanguageIdentifier
             foreach (var language in dataProvider.Languages)
             {
                 perceptrons.Add(new Perceptron(language, numberOfLetters));
+
             }
 
             // - - - -- - - - - - -- - - - - - - -- TRAIN - - - -- - - - - - -- - - - - - - -- 
             //train
-            foreach (var kvp in dataProvider.Dictionary)
+            foreach (var kvp in dataProvider.ListOfKeyValuePairs)
             {
-                // Console.WriteLine("Key: {0}, Value: {1}", kvp.Key, kvp.Value);
-                List<double> vector = MakeVector(kvp.Value);
+                List<double> vector = MakeVector(kvp.Value, numberOfLetters);
 
                 foreach (var perceptron in perceptrons)
                 {
                     for (int i = 0; i < epochs; i++)
                     {
-                        perceptron.Learn(vector, kvp.Value, learningRate);
+                        perceptron.Learn(vector, kvp.Key, learningRate);
                     }
                 }
             }
@@ -43,18 +48,17 @@ namespace Mini_projekt_LanguageIdentifier
             {
                 perceptron.Normalize();
             }
-
             // - - - -- - - - - - -- - - - - - - -- TEST - - - -- - - - - - -- - - - - - - -- 
-            dataProvider =
+           var dataProvider2 =
                 new DataProvider(
                     @"C:\Users\Jarek\RiderProjects\Mini_projekt_LanguageIdentifier\Mini_projekt_LanguageIdentifier\Data\lang.test.csv");
             string perceptronLanguage = "";
             int correct = 0;
 
-            foreach (var kvp in dataProvider.Dictionary)
+            foreach (var kvp in dataProvider2.ListOfKeyValuePairs)
             {
                 // Console.WriteLine("Key: {0}, Value: {1}", kvp.Key, kvp.Value);
-                List<double> vector = MakeVector(kvp.Value);
+                List<double> vector = MakeVector(kvp.Value, numberOfLetters);
                 NormalizeVector(vector);
                 double score = -1;
                 foreach (var perceptron in perceptrons)
@@ -83,41 +87,16 @@ namespace Mini_projekt_LanguageIdentifier
 
             double accuracy = (double)correct / 200 * 100;
             Console.WriteLine("Accuracy: " + accuracy + "%");
-
-            // for (String testDatum : testData) {
-            //     parts = testDatum.split(",");
-            //     language = parts[0];
-            //     text = parts[1];
-            //
-            //     List<double> vector = makeVector(text, numberOfLetters);
-            //
-            //     normalize(vector);
-            //     score = -1;
-            //
-            //     for (Perceptron perceptron : perceptrons) {
-            //         if (perceptron.getNet(vector) > score) {
-            //             score = perceptron.getNet(vector);
-            //             perceptronLanguage = perceptron.getLanguage();
-            //         }
-            //     }
-            //     if (perceptronLanguage.equals(language)) {
-            //         correct++;
-            //         System.out.println("+ Good Perception: " + perceptronLanguage + " - " + text);
-            //         System.out.println();
-            //     }else{
-            //         System.out.println("- Bad Perceptron: " +  perceptronLanguage + " - " + text);
-            //         System.out.println();
-            //     }
-            //
-            // }
-            // double accuracy = (double) correct / 200 * 100;
-            // System.out.println("Accuracy: " + accuracy + "%");
         }
 
 
-        private static List<double> MakeVector(String text)
+        private static List<double> MakeVector(string text, int inputSize)
         {
             var vector = new List<double>();
+            for (int i = 0; i < inputSize; i++)
+            {
+                vector.Add(0);
+            }
 
             foreach (var letter in text.ToCharArray())
             {
