@@ -1,78 +1,76 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Mini_projekt_LanguageIdentifier
 {
     public class Perceptron
     {
-        private List<double> weights;
-        public double threshold = 1;
+        private List<double> _weights;
+        public double Threshold = 1;//próg
 
         public string language;
 
         public Perceptron(string language, int inputSize)
         {
             this.language = language;
-            weights = new List<double>();
-            for (int i = 0; i < inputSize; i++)
+            _weights = new List<double>();
+            for (var i = 0; i < inputSize; i++)
             {
-                weights.Add(1);
+                _weights.Add(1);
             }
         }
 
         public double GetNet(List<double> vector)
         {
             double sum = 0;
-            for (int i = 0; i < vector.Count; i++)
+            for (var i = 0; i < vector.Count; i++)// X * W
             {
-                sum += vector[i] * weights[i];
-            } // X * W
+                sum += vector[i] * _weights[i];//ogólne net
+            } 
 
-            return sum - threshold; //net
+            return sum - Threshold; //uwzględniony próg
         }
 
         public void Normalize()
         {
-            double sum = 0;
-            foreach (var d in weights)
-            {
-                sum += d * d;
-            }
+            // v̂ = v / |v| iteruj po vectorze, gdzie elementem jest "d" i dodaje d^2 do sumy, tworzac tak sume
+            var sum = _weights.Sum(d => d * d);
 
-            double norm = Math.Sqrt(sum);
+            var vLength = Math.Sqrt(sum);//|v|
 
             var newVector = new List<double>();
 
-            for (int i = 0; i < weights.Count; i++)
+            for (var i = 0; i < _weights.Count; i++)
             {
-                newVector.Add(weights[i] / norm);
+                newVector.Add(_weights[i] / vLength);//v[i] / |v|
             }
 
-            threshold /= norm;
-            weights = newVector;
+            Threshold /= vLength;
+            _weights = newVector;
         }
 
         public void Learn(List<double> input, string keyLanguage, double learningRate)
         {
-            int d = language == keyLanguage ? 1 : 0;
+            var correct = language == keyLanguage ? 1 : 0;
             double sum = 0;
-            for (int i = 0; i < input.Count; i++)
+            for (var i = 0; i < input.Count; i++)
             {
-                sum += input[i] * this.weights[i];
-            } // X * W
+                sum += input[i] * _weights[i];
+            }
 
-            int y = (sum >= threshold ? 1 : 0);
-            if (y != d)
+            var y = (sum >= Threshold ? 1 : 0);
+            if (y != correct)
             {
                 var newVector = new List<double>();
 
-                for (int i = 0; i < input.Count; i++)
+                for (int i = 0; i < input.Count; i++) // W' = W + (Correct-Y) * Alpha * X
                 {
-                    newVector.Add(this.weights[i] + (d - y) * learningRate * input[i]);
-                } // W' = W + (Correct-Y) * Alpha * X
+                    newVector.Add(_weights[i] + (correct - y) * learningRate * input[i]);
+                }
 
-                weights = newVector;
-                threshold += (d - y) * learningRate * -1;
+                _weights = newVector;
+                Threshold -= (correct - y) * learningRate ;
             }
         }
     }
